@@ -1,0 +1,8 @@
+{
+  "projects": {
+    "default": "accenture-atci-attendance",
+    "testing": "attendancetracker-dd4bc"
+  },
+  "targets": {},
+  "etags": {}
+}

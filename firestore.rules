@@ -1,0 +1,57 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAccenture() {
+      return isAuthenticated() &&
+        request.auth.token.email != null &&
+        request.auth.token.email.matches('.*@accenture.com$');
+    }
+
+    function isMainAdmin() {
+      return isAuthenticated() &&
+        request.auth.uid == 'dbN1B8fmbma1V88mKop4NKAh34Q2';
+    }
+
+    function isSelf(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+
+    match /attendance/{docId} {
+      allow read: if isAccenture();
+      allow write: if false;
+    }
+
+    match /users/{uid} {
+      allow read: if isAccenture();
+      allow update: if isAccenture() && (isSelf(uid) || isMainAdmin());
+      allow create, delete: if isMainAdmin();
+    }
+
+    match /emailWhitelist/{emailKey} {
+      allow read: if isAccenture();
+      allow write: if isMainAdmin();
+    }
+
+    match /admins/{uid} {
+      allow read, write: if isMainAdmin();
+    }
+
+    match /adminSecrets/{id} {
+      allow read, write: if isMainAdmin();
+    }
+
+    match /auditLogs/{id} {
+      allow create: if isAccenture();
+      allow read: if isMainAdmin();
+      allow update, delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
