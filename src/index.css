@@ -11,4 +11,18 @@ body,
 body {
   margin: 0;
   font-family: Inter, "Segoe UI", sans-serif;
+  background:
+    radial-gradient(circle at 10% 10%, rgba(99, 102, 241, 0.15), transparent 35%),
+    radial-gradient(circle at 90% 20%, rgba(168, 85, 247, 0.18), transparent 40%),
+    radial-gradient(circle at 20% 90%, rgba(14, 165, 233, 0.15), transparent 35%);
+  animation: hueShift 18s ease-in-out infinite alternate;
+}
+
+@keyframes hueShift {
+  from {
+    filter: hue-rotate(0deg);
+  }
+  to {
+    filter: hue-rotate(20deg);
+  }
 }

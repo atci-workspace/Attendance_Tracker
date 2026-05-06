@@ -5,15 +5,13 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function isAccenture() {
-      return isAuthenticated() &&
-        request.auth.token.email != null &&
-        request.auth.token.email.matches('.*@accenture.com$');
+    function canUsePortal() {
+      return isAuthenticated();
     }
 
     function isMainAdmin() {
       return isAuthenticated() &&
-        request.auth.uid == 'dbN1B8fmbma1V88mKop4NKAh34Q2';
+        request.auth.uid == '5vQbogx38YO3CeQMA2TvMgzN2zt2';
     }
 
     function isSelf(uid) {
@@ -21,18 +19,24 @@ service cloud.firestore {
     }
 
     match /attendance/{docId} {
-      allow read: if isAccenture();
+      allow read: if canUsePortal();
       allow write: if false;
     }
 
     match /users/{uid} {
-      allow read: if isAccenture();
-      allow update: if isAccenture() && (isSelf(uid) || isMainAdmin());
-      allow create, delete: if isMainAdmin();
+      allow read: if canUsePortal();
+      allow update: if canUsePortal() && (isSelf(uid) || isMainAdmin());
+      allow create: if canUsePortal() && isSelf(uid);
+      allow delete: if isMainAdmin();
+    }
+
+    match /teamMembers/{docId} {
+      allow read: if true;
+      allow write: if isMainAdmin();
     }
 
     match /emailWhitelist/{emailKey} {
-      allow read: if isAccenture();
+      allow read: if canUsePortal();
       allow write: if isMainAdmin();
     }
 
@@ -45,7 +49,7 @@ service cloud.firestore {
     }
 
     match /auditLogs/{id} {
-      allow create: if isAccenture();
+      allow create: if canUsePortal();
       allow read: if isMainAdmin();
       allow update, delete: if false;
     }

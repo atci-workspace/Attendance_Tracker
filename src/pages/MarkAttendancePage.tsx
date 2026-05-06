@@ -1,33 +1,39 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { PageCard, FieldLabel, Input } from '../components/Ui'
 import { STATUS_OPTIONS, type AttendanceStatus } from '../config/attendance'
 import { isWeekend, safeDay } from '../utils/date'
 import { isRateLimited } from '../utils/rateLimit'
 import { markAttendanceRange, markSpecificDates, markTodayAttendance } from '../lib/attendanceApi'
 import { auth } from '../lib/firebase'
-
-const members = [
-  { label: 'Dev 1', uid: 'dev-1' },
-  { label: 'Dev 2', uid: 'dev-2' },
-  { label: 'Tester 1', uid: 'tester-1' },
-  { label: 'Tester 2', uid: 'tester-2' },
-]
+import { getTeamMembersCached } from '../lib/orgApi'
+import type { TeamMember } from '../types/org'
 
 export function MarkAttendancePage() {
+  const [members, setMembers] = useState<TeamMember[]>([])
   const [result, setResult] = useState('')
   const [loading, setLoading] = useState(false)
-  const [quickMemberUid, setQuickMemberUid] = useState(members[0].uid)
+  const [quickMemberUid, setQuickMemberUid] = useState('')
   const [quickStatus, setQuickStatus] = useState<AttendanceStatus>('AB')
-  const [rangeMemberUid, setRangeMemberUid] = useState(members[0].uid)
+  const [rangeMemberUid, setRangeMemberUid] = useState('')
   const [rangeStatus, setRangeStatus] = useState<AttendanceStatus>('AB')
   const [rangeStart, setRangeStart] = useState('')
   const [rangeEnd, setRangeEnd] = useState('')
-  const [specificMemberUid, setSpecificMemberUid] = useState(members[0].uid)
+  const [specificMemberUid, setSpecificMemberUid] = useState('')
   const [specificStatus, setSpecificStatus] = useState<AttendanceStatus>('AB')
   const [specificYear, setSpecificYear] = useState(new Date().getFullYear())
   const [specificMonth, setSpecificMonth] = useState(new Date().getMonth() + 1)
   const [specificDatesText, setSpecificDatesText] = useState('')
   const todayDisabled = useMemo(() => isWeekend(new Date()), [])
+
+  useEffect(() => {
+    void getTeamMembersCached().then((rows) => {
+      setMembers(rows)
+      const first = rows[0]?.accentureEmail ?? ''
+      setQuickMemberUid(first)
+      setRangeMemberUid(first)
+      setSpecificMemberUid(first)
+    })
+  }, [])
 
   function guard(key: string): boolean {
     if (isRateLimited(key)) {
@@ -60,7 +66,7 @@ export function MarkAttendancePage() {
         <p className="mb-3 text-sm">Mark today for a selected member. Weekends are blocked.</p>
         <div className="grid gap-2 md:grid-cols-3">
           <select className="rounded-lg border px-3 py-2" value={quickMemberUid} onChange={(e) => setQuickMemberUid(e.target.value)}>
-            {members.map((m) => <option key={m.uid} value={m.uid}>{m.label}</option>)}
+            {members.map((m) => <option key={m.accentureEmail} value={m.accentureEmail}>{m.name} ({m.teamName})</option>)}
           </select>
           <select
             className="rounded-lg border px-3 py-2"
@@ -93,7 +99,7 @@ export function MarkAttendancePage() {
         <p className="mb-3 text-sm">Apply one status across a date range, excluding weekends.</p>
         <div className="grid gap-2 md:grid-cols-4">
           <select className="rounded-lg border px-3 py-2" value={rangeMemberUid} onChange={(e) => setRangeMemberUid(e.target.value)}>
-            {members.map((m) => <option key={m.uid} value={m.uid}>{m.label}</option>)}
+            {members.map((m) => <option key={m.accentureEmail} value={m.accentureEmail}>{m.name} ({m.teamName})</option>)}
           </select>
           <select
             className="rounded-lg border px-3 py-2"
@@ -128,7 +134,7 @@ export function MarkAttendancePage() {
         <p className="mb-3 text-sm">Provide comma-separated days for selected year/month.</p>
         <div className="grid gap-2 md:grid-cols-4">
           <select className="rounded-lg border px-3 py-2" value={specificMemberUid} onChange={(e) => setSpecificMemberUid(e.target.value)}>
-            {members.map((m) => <option key={m.uid} value={m.uid}>{m.label}</option>)}
+            {members.map((m) => <option key={m.accentureEmail} value={m.accentureEmail}>{m.name} ({m.teamName})</option>)}
           </select>
           <select
             className="rounded-lg border px-3 py-2"

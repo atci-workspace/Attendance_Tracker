@@ -7,8 +7,8 @@ const db = getFirestore()
 type AttendanceStatus = 'AB' | 'PH' | 'SL' | 'PL' | 'CL' | 'LC'
 
 function assertAccenture(email?: string) {
-  if (!email || !email.endsWith('@accenture.com')) {
-    throw new HttpsError('permission-denied', 'Only @accenture.com users are allowed.')
+  if (!email) {
+    throw new HttpsError('permission-denied', 'Authenticated users only.')
   }
 }
 
